@@ -1,0 +1,56 @@
+version: '1.0'
+
+services:
+  archive:
+    restart: always
+    links:
+      - postgres:postgres
+    env_file: .env
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+    command: uwsgi --ini /opt/app/archive_service/archive_service/uwsgi.ini
+    #command: uwsgi --socket /var/www/dkr.sock --module archive_service.archive_service.wsgi:application --chmod-socket=666 --http=8000 --buffer-size=32768
+    #command: gunicorn archive_service.archive_service.wsgi:application --bind 0.0.0.0:8000
+    # command: sh -c "python /opt/app/archive_service/manage.py makemigrations --noinput
+    #   && python /opt/app/archive_service/manage.py migrate --noinput  && uwsgi --ini /opt/app/archive_service/archive_service/uwsgi.ini"
+    container_name: archive
+    volumes:
+      - /Users/rahulprajapati/rahul/ws/forti_archive:/opt/app
+      - web_static:/opt/web/staticfiles
+      - web_media:/opt/web/mediafiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    restart: always
+    image: postgres:15.3-alpine
+    environment:
+      POSTGRES_USER: archive
+      POSTGRES_DB: archive
+      POSTGRES_PASSWORD: archive123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+
+# enable nginx
+
+#  nginx:
+#    build: ./docker/nginx
+#    volumes:
+#      - static_volume:/opt/web/staticfiles
+#      - media_volume:/opt/web/staticfiles
+#    ports:
+#      - 1337:80
+#    depends_on:
+#      - web
+
+volumes:
+  web_static:
+  web_media:
+  web_app:
+  pgdata:
+    #external: true
